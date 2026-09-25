@@ -1,7 +1,6 @@
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AnalitzadorText {
     public static void main(String[] args) {
@@ -11,33 +10,37 @@ public class AnalitzadorText {
         long totalLinies = 0;
         long totalParaules = 0;
         
-        HashMap<Character, Integer> frequenciaCaracters = new HashMap<>();
+        // Array de freqüències per a tots els caràcters UNICODE
+        int[] frequenciaCaracters = new int[65536];
+        
         boolean dinsParaula = false;
         boolean fitxerBuit = true;
-        
-        // Utilitzem try-with-resources per tancar el FileReader automàticament
+        char ultimCaracter = ' ';
+
+        // Try-with-resources per tancar el FileReader automàticament
         try (FileReader reader = new FileReader(rutaFitxer)) {
             int valorLlegit;
             
             while ((valorLlegit = reader.read()) != -1) {
                 char caracter = (char) valorLlegit;
                 fitxerBuit = false;
+                ultimCaracter = caracter;
                 
                 // Gestió dels salts de línia
                 if (caracter == '\n') {
                     totalLinies++;
                     dinsParaula = false;
-                    continue; // No comptar el salt de línia com a caràcter habitual
+                    continue; // Els salts de línia no compten com a caràcters habituals
                 } else if (caracter == '\r') {
-                    continue; // Ignorar el retorn de carro (comú en sistemes Windows)
+                    continue; // Ignorar el retorn de carro (sistemes Windows)
                 }
                 
-                // Comptabilitzar caràcter (espais i tabulacions sí que compten)
+                // Comptabilitzar caràcter (espais i tabulacions sí compten)
                 totalCaracters++;
                 
                 // Comptabilitzar freqüència (excloent espais i tabulacions)
                 if (caracter != ' ' && caracter != '\t') {
-                    frequenciaCaracters.put(caracter, frequenciaCaracters.getOrDefault(caracter, 0) + 1);
+                    frequenciaCaracters[caracter]++;
                 }
                 
                 // Detecció de paraules
@@ -51,35 +54,38 @@ public class AnalitzadorText {
                 }
             }
             
-            // Ajustar el recompte de línies si el fitxer té contingut
-            if (!fitxerBuit) {
-                totalLinies++; // Sumem la primera línia
+            // Si el fitxer té contingut i no acaba en '\n', comptem la línia actual
+            if (!fitxerBuit && ultimCaracter != '\n') {
+                totalLinies++;
             }
             
-            // Trobar el caràcter més freqüent
+            // Cerca del caràcter més freqüent a l'array
             char caracterMesFrequent = ' ';
             int maxFreq = 0;
-            for (Map.Entry<Character, Integer> entry : frequenciaCaracters.entrySet()) {
-                if (entry.getValue() > maxFreq) {
-                    maxFreq = entry.getValue();
-                    caracterMesFrequent = entry.getKey();
+            for (int i = 0; i < frequenciaCaracters.length; i++) {
+                if (frequenciaCaracters[i] > maxFreq) {
+                    maxFreq = frequenciaCaracters[i];
+                    caracterMesFrequent = (char) i;
                 }
             }
             
-            // Mostrar resultats per pantalla
-            System.out.println("--- RESULTATS DE L'ANÀLISI ---");
-            System.out.println("Nombre total de caràcters (sense salts de línia): " + totalCaracters);
-            System.out.println("Nombre total de línies: " + totalLinies);
-            System.out.println("Nombre total de paraules: " + totalParaules);
+            // Sortida dels resultats
+            System.out.println("Nombre de caràcters: " + totalCaracters);
+            System.out.println("Nombre de línies: " + totalLinies);
+            System.out.println("Nombre de paraules: " + totalParaules);
             
             if (maxFreq > 0) {
-                System.out.println("Caràcter més freqüent: '" + caracterMesFrequent + "' (apareix " + maxFreq + " vegades)");
+                System.out.println("Caràcter més repetit: " + caracterMesFrequent);
             } else {
-                System.out.println("No s'han trobat caràcters per analitzar la freqüència.");
+                System.out.println("No s'han trobat caràcters vàlids.");
             }
-            
+
+        } catch (FileNotFoundException e) {
+            System.err.println("El fitxer no existeix.");
         } catch (IOException e) {
-            System.err.println("S'ha produït un error al llegir el fitxer: " + e.getMessage());
+            System.err.println("S'ha produït un error de lectura.");
+        } catch (SecurityException e) {
+            System.err.println("No tens permisos per accedir al fitxer.");
         }
     }
 }
