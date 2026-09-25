@@ -1,1 +1,1 @@
-# pt1_AD
+Repositori de Acces a Dades
