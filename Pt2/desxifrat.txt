@@ -1,3 +1,0 @@
-Hola, aquest és un missatge secret!
-La tecnologia Java permet processar fitxers fàcilment.
-12345 - Prova de xifrat Cèsar amb inversió de línia.
